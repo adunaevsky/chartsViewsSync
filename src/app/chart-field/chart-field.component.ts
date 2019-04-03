@@ -19,7 +19,7 @@ export class ChartFieldComponent implements OnInit {
   subscription: Subscription;
 
   @Input() id: number;
- /*  @Output() newScrollPosition: EventEmitter<any> = new EventEmitter(); */
+  /*  @Output() newScrollPosition: EventEmitter<any> = new EventEmitter(); */
   start: number;
   end: number;
 
@@ -40,13 +40,18 @@ export class ChartFieldComponent implements OnInit {
     this.zone.runOutsideAngular(() => {
       let chart = am4core.create("chartdiv" + this.id, am4charts.XYChart);
 
+
+/*       chart.events.on('track', (e) => {
+        console.log(e.point, this.id)
+      }); */
+
       chart.paddingRight = 20;
 
       let data = [];
       let visits = 10;
       for (let i = 1; i < 366; i++) {
         visits += Math.round((Math.random() < 0.5 ? 1 : -1) * Math.random() * 10);
-     //   data.push({ date:i , name: "name" + i, value: visits });
+        //   data.push({ date:i , name: "name" + i, value: visits });
         data.push({ date: new Date(2018, 0, i), name: "name" + i, value: visits });
       }
 
@@ -66,7 +71,29 @@ export class ChartFieldComponent implements OnInit {
       series.dataFields.dateX = "date";
       series.dataFields.valueY = "value";
 
-      series.tooltipText = "{valueY.value}";
+      //series.tooltipText = "{valueY.value}";
+      series.tooltipHTML = `<center><strong>Value: {valueY.value}</strong></center>`;
+
+
+/* series.events.on('track',(e)=>{
+console.log(e.pointer.point)
+
+ this.chartSync.announceHoverPoint({
+  x: e.pointer.point.x,
+  y: e.pointer.point.y
+});
+
+}) */
+series.events.on('tooltipshownat',(e)=>{
+//console.log(e.target, e.target.tooltipY, e.target.tooltipX)
+
+this.chartSync.announceHoverPoint({
+  x: e.target.tooltipX,
+  y: e.target.tooltipY
+});
+
+})
+
       chart.cursor = new am4charts.XYCursor();
 
       //cont vs let variable?
@@ -80,16 +107,28 @@ export class ChartFieldComponent implements OnInit {
         });
 
       });
+
+      scrollbarX.events.on('over', (e) => {
+     //   console.log(e, this.id)
+      });
+
       chart.scrollbarX = scrollbarX;
 
       this.chart = chart;
 
-
       this.subscription = this.chartSync.sharedScrollStats$.subscribe(
         d => {
           dateAxis.zoom({ start: d.start, end: d.end }, false, true);
-
         }
+      );
+      this.subscription = this.chartSync.sharedHoverPoint$.subscribe(
+        d => {
+         console.log({ x: d.x, y: d.y }, this.id)
+       //  this.chart.showSeriesTooltip({ x: d.x, y: d.y });
+      // this.chart.showAxisTooltip(chart.xAxes,d.x);
+        }
+
+
       );
 
     });
