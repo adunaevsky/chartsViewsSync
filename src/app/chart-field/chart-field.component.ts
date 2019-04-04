@@ -23,14 +23,16 @@ export class ChartFieldComponent implements OnInit {
   start: number;
   end: number;
   syncedHoverPoint = 0;
+  showHover: boolean = false;
 
-  updateSyncValue(v) {
 
-    this.zone.run(() => {
-      this.syncedHoverPoint = v;
 
-    })
-
+  setHover(show: boolean) {
+    if (show) {
+      this.chartSync.announceActiveTip({ activeTip: true, id: this.id });
+    } else {
+      this.chartSync.announceActiveTip({ activeTip: false, id: this.id });
+    }
   }
 
   updateTest() {
@@ -39,8 +41,14 @@ export class ChartFieldComponent implements OnInit {
 
   constructor(private zone: NgZone, private chartSync: ChartSyncService) {
 
-
-
+    this.subscription = this.chartSync.sharedActiveTip$.subscribe(
+      d => {
+        if (this.id !== d.id) {
+          this.showHover = d.activeTip;
+        } else {
+          this.showHover = false;
+        }
+      })
   }
 
   ngOnInit() {
@@ -98,13 +106,24 @@ export class ChartFieldComponent implements OnInit {
       });
 
       }) */
+      /*       series.events.on('shown', (e) => {
+              console.log('over!')
+
+                    });
+                    series.events.on('out', (e) => {
+              console.log('out!')
+
+                    }); */
+
       series.events.on('tooltipshownat', (e) => {
         //  console.log(e.dataItem.index);
         this.chartSync.announceHoverIndex({
           index: e.dataItem.index
         });
 
-      })
+      });
+
+
       /* series.events.on('tooltipshownat',(e)=>{
       console.log(e.target, e.target.tooltipY, e.target.tooltipX)
 
@@ -149,12 +168,12 @@ export class ChartFieldComponent implements OnInit {
           //   console.log(this.syncedHoverPoint)
           //   console.log(d.index, this.chart.data[d.index].value)
           // this.syncedHoverPoint = this.chart.data[d.index].value;
-         // this.updateSyncValue(this.chart.data[d.index].value);
+          // this.updateSyncValue(this.chart.data[d.index].value);
 
-           this.zone.run(()=>{
-             this.syncedHoverPoint = this.chart.data[d.index].value;
+          this.zone.run(() => {
+            this.syncedHoverPoint = this.chart.data[d.index].value;
 
-           })
+          })
           // console.log(this.syncedHoverPoint)
           //  dateAxis.zoom({ start: d.start, end: d.end }, false, true);
         }

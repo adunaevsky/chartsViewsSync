@@ -13,6 +13,10 @@ interface chartHoverPoint {
 interface chartHoverIndex {
   index: number
 }
+interface isActiveTip {
+  activeTip: boolean,
+  id: number
+}
 
 @Injectable({
   providedIn: 'root'
@@ -24,10 +28,12 @@ export class ChartSyncService {
   private sharedScrollStats = new Subject<chartSpecs>();
   private sharedHoverPoint = new Subject<chartHoverPoint>();
   private sharedHoverIndex = new Subject<chartHoverIndex>();
+  private sharedActiveTip = new Subject<isActiveTip>();
 
   sharedScrollStats$ = this.sharedScrollStats.asObservable();
   sharedHoverPoint$ = this.sharedHoverPoint.asObservable();
   sharedHoverIndex$ = this.sharedHoverIndex.asObservable();
+  sharedActiveTip$ = this.sharedActiveTip.asObservable();
 
   announceScrollStats(d: any) {
     this.sharedScrollStats.next(d);
@@ -37,6 +43,9 @@ export class ChartSyncService {
   }
   announceHoverIndex(d: any) {
     this.sharedHoverIndex.next(d);
+  }
+  announceActiveTip(d: any) {
+    this.sharedActiveTip.next(d);
   }
 
 }
