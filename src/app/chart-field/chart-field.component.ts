@@ -19,9 +19,23 @@ export class ChartFieldComponent implements OnInit {
   subscription: Subscription;
 
   @Input() id: number;
-  /*  @Output() newScrollPosition: EventEmitter<any> = new EventEmitter(); */
+
   start: number;
   end: number;
+  syncedHoverPoint = 0;
+
+  updateSyncValue(v) {
+
+    this.zone.run(() => {
+      this.syncedHoverPoint = v;
+
+    })
+
+  }
+
+  updateTest() {
+    this.syncedHoverPoint = 0
+  }
 
   constructor(private zone: NgZone, private chartSync: ChartSyncService) {
 
@@ -41,9 +55,9 @@ export class ChartFieldComponent implements OnInit {
       let chart = am4core.create("chartdiv" + this.id, am4charts.XYChart);
 
 
-/*       chart.events.on('track', (e) => {
-        console.log(e.point, this.id)
-      }); */
+      /*       chart.events.on('track', (e) => {
+              console.log(e.point, this.id)
+            }); */
 
       chart.paddingRight = 20;
 
@@ -75,24 +89,31 @@ export class ChartFieldComponent implements OnInit {
       series.tooltipHTML = `<center><strong>Value: {valueY.value}</strong></center>`;
 
 
-/* series.events.on('track',(e)=>{
-console.log(e.pointer.point)
+      /* series.events.on('track',(e)=>{
+      console.log(e.pointer.point)
 
- this.chartSync.announceHoverPoint({
-  x: e.pointer.point.x,
-  y: e.pointer.point.y
-});
+       this.chartSync.announceHoverPoint({
+        x: e.pointer.point.x,
+        y: e.pointer.point.y
+      });
 
-}) */
-series.events.on('tooltipshownat',(e)=>{
-//console.log(e.target, e.target.tooltipY, e.target.tooltipX)
+      }) */
+      series.events.on('tooltipshownat', (e) => {
+        //  console.log(e.dataItem.index);
+        this.chartSync.announceHoverIndex({
+          index: e.dataItem.index
+        });
 
-this.chartSync.announceHoverPoint({
-  x: e.target.tooltipX,
-  y: e.target.tooltipY
-});
+      })
+      /* series.events.on('tooltipshownat',(e)=>{
+      console.log(e.target, e.target.tooltipY, e.target.tooltipX)
 
-})
+      this.chartSync.announceHoverPoint({
+        x: e.target.tooltipX,
+        y: e.target.tooltipY
+      });
+
+      }) */
 
       chart.cursor = new am4charts.XYCursor();
 
@@ -109,7 +130,7 @@ this.chartSync.announceHoverPoint({
       });
 
       scrollbarX.events.on('over', (e) => {
-     //   console.log(e, this.id)
+        //   console.log(e, this.id)
       });
 
       chart.scrollbarX = scrollbarX;
@@ -121,15 +142,30 @@ this.chartSync.announceHoverPoint({
           dateAxis.zoom({ start: d.start, end: d.end }, false, true);
         }
       );
-      this.subscription = this.chartSync.sharedHoverPoint$.subscribe(
+
+
+      this.subscription = this.chartSync.sharedHoverIndex$.subscribe(
         d => {
-         console.log({ x: d.x, y: d.y }, this.id)
-       //  this.chart.showSeriesTooltip({ x: d.x, y: d.y });
-      // this.chart.showAxisTooltip(chart.xAxes,d.x);
+          //   console.log(this.syncedHoverPoint)
+          //   console.log(d.index, this.chart.data[d.index].value)
+          // this.syncedHoverPoint = this.chart.data[d.index].value;
+         // this.updateSyncValue(this.chart.data[d.index].value);
+
+           this.zone.run(()=>{
+             this.syncedHoverPoint = this.chart.data[d.index].value;
+
+           })
+          // console.log(this.syncedHoverPoint)
+          //  dateAxis.zoom({ start: d.start, end: d.end }, false, true);
         }
-
-
       );
+
+      /* this.subscription = this.chartSync.sharedHoverPoint$.subscribe(
+        d => {
+          console.log({ x: d.x, y: d.y }, this.id)
+          this.chart.showSeriesTooltip({ x: d.x, y: d.y });
+        }
+      ); */
 
     });
   }
